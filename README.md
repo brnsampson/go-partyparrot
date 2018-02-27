@@ -19,9 +19,11 @@ To build:
 2. Download the lambda packages
     go get github.com/aws/aws-lambda-go/events
     go get github.com/aws/aws-lambda-go/lambda
+
 3.a. (only if you're on windows like me :'(  ) get the lambda zip creater
     go.exe get -u github.com/aws/aws-lambda-go/cmd/build-lambda-zip
     ~\go\bin\build-lambda-zip.exe -o .\pplambda.zip .\pplambda
+
 3.b. (for linux)
     chmod +x pplambda
     zip pplambda.zip pplambda
