@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"experiment/pkg/partyparrot"
 	"fmt"
 	"net/url"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/brnsampson/go-partyparrot/partyparrot"
 )
 
 var (
