@@ -10,9 +10,11 @@ pipeline {
     // Setup variables
     environment {
         // application name will be used in a few places so create a variable and use string interpolation to use it where needed
-        applicationName = "go-partyparrot"
+        applicationName = "brnsampson/go-partyparrot" // TODO replace this with repository name
         // a basic build number so that when we build and push to Artifactory we will not overwrite our previous builds
-        buildNumber = "0.1.${env.BUILD_NUMBER}"
+        // buildNumber = "0.1.${env.BUILD_NUMBER}"
+        // a basic build number so that when we build and push to Artifactory we will not overwrite our previous builds
+        buildVersion = "${env.TAG}"
         // Path we will mount the project to for the Docker container
         GOPATH = "${env.WORKSPACE}"
         // You will need the credential plugin for this pipeline. You'll also need to create a matching global credential, of course.
@@ -22,6 +24,13 @@ pipeline {
     }
     
     stages {
+        // Clean out the workspace.
+        stage("Clean workspace") {
+            steps {
+                deleteDir()
+            }
+        }
+
         // Checkout the code from Github, stages allow Jenkins to visualize the different sections of your build steps in the UI
         stage('Checkout from GitHub') {
             // No special needs here, if your projects relys on submodules the checkout step would need to be different
@@ -37,20 +46,20 @@ pipeline {
                 sh "go get github.com/aws/aws-lambda-go/events"
                 sh "go get github.com/aws/aws-lambda-go/lambda"
                 sh "go get github.com/brnsampson/go-partyparrot/partyparrot"
-                sh "GOOS=linux GOARCH=amd64 go build -o build/${buildNumber}/${env.applicationName}.${env.buildNumber} ./pplambda"
-                sh "chmod +x build/${env.buildNumber}/${env.applicationName}.${env.buildNumber}"
+                sh "GOOS=linux GOARCH=amd64 go build -o build/${env.buildVersion}/${env.applicationName}.${env.buildVersion} ./pplambda"
+                sh "chmod +x build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}"
             }
         }
     
         stage("Zip") {
             steps {
-                zip zipFile: "build/${env.buildNumber}/${env.applicationName}.${env.buildNumber}.zip", glob: "build/${env.buildNumber}/${env.applicationName}.${env.buildNumber}"
+                zip zipFile: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}.zip", glob: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}"
             }
         }
-    
-        stage("Push to Octopus") {
+
+        stage("Push to S3") {
             steps {
-                sh "curl -X POST -k https://${env.OCTOSERVER}:443/api/packages/raw -H 'X-Octopus-ApiKey: ${env.APIKEY}' -F 'data=@build/${env.buildNumber}/${env.applicationName}.${env.buildNumber}.zip'"
+                s3Upload consoleLogLevel: 'INFO', dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'whobe-deploy', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: true, selectedRegion: 'us-west-2', showDirectlyInBrowser: false, sourceFile: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}.zip", storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 'Jenkins', userMetadata: []
             }
         }
     }
