@@ -14,7 +14,7 @@ pipeline {
         // a basic build number so that when we build and push to Artifactory we will not overwrite our previous builds
         // buildNumber = "0.1.${env.BUILD_NUMBER}"
         // a build number based on git tag so that when we build and push to s3 we will not overwrite our previous builds
-        buildVersion = "${env.TAG:1}"
+        buildVersion = "${env.TAG.substring(1)}"
         // Path we will mount the project to for the Docker container
         GOPATH = "${env.WORKSPACE}"
         // You will need the credential plugin for this pipeline. You'll also need to create a matching global credential, of course.
