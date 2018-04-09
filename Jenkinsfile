@@ -10,7 +10,7 @@ pipeline {
     // Setup variables
     environment {
         // application name will be used in a few places so create a variable and use string interpolation to use it where needed
-        applicationName = "brnsampson/go-partyparrot" // TODO replace this with repository name
+        applicationName = "go-partyparrot" // TODO replace this with repository name
         // a basic build number so that when we build and push to Artifactory we will not overwrite our previous builds
         // buildNumber = "0.1.${env.BUILD_NUMBER}"
         // a basic build number so that when we build and push to Artifactory we will not overwrite our previous builds
@@ -53,13 +53,15 @@ pipeline {
     
         stage("Zip") {
             steps {
-                zip zipFile: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}.zip", glob: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}"
+                dir("build/${env.buildVersion}/") {
+                    zip zipFile: "${env.applicationName}.${env.buildVersion}.zip", glob: "${env.applicationName}.${env.buildVersion}"
+                }
             }
         }
 
         stage("Push to S3") {
             steps {
-                s3Upload consoleLogLevel: 'INFO', dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'whobe-deploy', excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: true, selectedRegion: 'us-west-2', showDirectlyInBrowser: false, sourceFile: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}.zip", storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 'Jenkins', userMetadata: []
+                s3Upload consoleLogLevel: 'INFO', dontWaitForConcurrentBuildCompletion: false, entries: [[bucket: 'whobe-deploy', pathStyleAccessEnabled: true, path: "${env.applicationName}.${env.buildVersion}.zip", excludedFile: '', flatten: false, gzipFiles: false, keepForever: false, managedArtifacts: false, noUploadOnFailure: true, selectedRegion: 'us-west-2', showDirectlyInBrowser: false, sourceFile: "build/${env.buildVersion}/${env.applicationName}.${env.buildVersion}.zip", storageClass: 'STANDARD', uploadFromSlave: false, useServerSideEncryption: false]], pluginFailureResultConstraint: 'FAILURE', profileName: 'Jenkins', userMetadata: []
             }
         }
     }
